@@ -231,17 +231,17 @@ export const verifyOTP = async (req, res) => {
 
     // Set access token cookie
     res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 60 * 60 * 1000 // 1 hour
     });
     
     // Set refresh token cookie
     res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -405,7 +405,7 @@ export const refreshToken = async (req, res) => {
     const cookieOptions = {
       httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
       secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: process.env.COOKIE_SAME_SITE || 'lax',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       domain: process.env.COOKIE_DOMAIN || 'localhost',
       path: '/',
     };
@@ -535,17 +535,17 @@ export const login = async (req, res) => {
 
     // Set access token as HTTP-only cookie
     res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 60 * 60 * 1000 // 1 hour
     });
     
     // Set refresh token as HTTP-only cookie
     res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000 // 30 or 7 days
     });
 

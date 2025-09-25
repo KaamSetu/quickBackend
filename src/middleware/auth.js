@@ -84,9 +84,9 @@ const refreshAccessToken = (req, res) => {
     
     // Set the new access token as a cookie
     res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 60 * 60 * 1000 // 1 hour
     });
   } catch (error) {
@@ -144,16 +144,16 @@ const refreshAndContinue = async (req, res, next) => {
     
     // Set new tokens as cookies
     res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 60 * 60 * 1000 // 1 hour
     });
     
     res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      httpOnly: process.env.COOKIE_HTTP_ONLY === 'true',
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: process.env.COOKIE_SAME_SITE || 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
