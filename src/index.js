@@ -22,6 +22,7 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   'https://kaamsetu.co.in',
+  'https://www.kaamsetu.co.in', // your production frontend
   'https://app.kaamsetu.co.in', // your production frontend
 ];
 
