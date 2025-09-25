@@ -23,7 +23,6 @@ const app = express();
 const allowedOrigins = [
   'https://kaamsetu.co.in',
   'https://app.kaamsetu.co.in', // your production frontend
-  'https://quick-frontend-g1f01umwd-kaamsetus-projects.vercel.app' // Vercel preview
 ];
 
 const corsOptions = {
