@@ -42,8 +42,22 @@ const corsOptions = {
   exposedHeaders: ['set-cookie']
 };
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable preflight for all routes
+app.use(cors({
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['set-cookie']
+}));
+app.options('*', cors()); // Enable preflight for all routes
 
 // Fallback middleware to always set CORS headers for allowed origins.
 // This helps when requests hit reverse-proxied domains like api.kaamsetu.co.in
@@ -74,13 +88,13 @@ mongoose.connect(MONGODB_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/jobs', jobRoutes);
-app.use('/workers', workerRoutes);
-app.use('/clients', clientRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/workers', workerRoutes);
+app.use('/api/clients', clientRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Kaamsetu API is running',
