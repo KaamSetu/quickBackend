@@ -59,13 +59,13 @@ mongoose.connect(MONGODB_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/workers', workerRoutes);
-app.use('/api/clients', clientRoutes);
+app.use('/auth', authRoutes);
+app.use('/jobs', jobRoutes);
+app.use('/workers', workerRoutes);
+app.use('/clients', clientRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'Kaamsetu API is running',
