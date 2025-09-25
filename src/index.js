@@ -20,15 +20,31 @@ const __dirname = dirname(__filename);
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  'https://kaamsetu.co.in',
+  'https://app.kaamsetu.co.in', // your production frontend
+  'https://quick-frontend-g1f01umwd-kaamsetus-projects.vercel.app' // Vercel preview
+];
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['set-cookie']
 };
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable preflight for all routes
+
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
