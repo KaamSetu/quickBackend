@@ -4,7 +4,7 @@ import OTP from '../models/OTP.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
-import MailerSend from "mailersend";
+import { MailerSend, EmailParams } from "mailersend";
 
 // POST /api/auth/register
 export const register = async (req, res) => {
@@ -575,19 +575,17 @@ export const login = async (req, res) => {
 };
 
 // Email service function
-
-
 const mailer = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY
 });
 
 export const sendOTPEmail = async (email, otp, name) => {
   try {
-    await mailer.email.send({
-      from: process.env.EMAIL_FROM,
-      to: [email],
-      subject: "Verify Your Email - Kaamsetu",
-      html: `
+    const emailParams = new EmailParams()
+      .setFrom(process.env.EMAIL_FROM)
+      .setTo(email)
+      .setSubject("Verify Your Email - Kaamsetu")
+      .setHtml(`
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Welcome to Kaamsetu, ${name}!</h2>
           <p>Your OTP is:</p>
@@ -596,12 +594,13 @@ export const sendOTPEmail = async (email, otp, name) => {
           </div>
           <p>This OTP will expire in 10 minutes.</p>
         </div>
-      `
-    });
+      `);
+
+    await mailer.email.send(emailParams);
+
     console.log("✅ OTP email sent successfully");
   } catch (err) {
     console.error("❌ Error sending OTP email:", err);
     throw err;
   }
 };
-
