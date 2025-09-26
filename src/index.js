@@ -18,49 +18,34 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+// CORS Middleware
 
-// Middleware
 const allowedOrigins = [
   'https://kaamsetu.co.in',
-  'https://www.kaamsetu.co.in', // your production frontend
-  'https://app.kaamsetu.co.in', // your production frontend
+  'https://www.kaamsetu.co.in',
+  'https://app.kaamsetu.co.in',
 ];
 
 const corsOptions = {
   origin: function(origin, callback) {
     // allow requests with no origin (like Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS: ' + origin));
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS: ' + origin));
   },
-  credentials: true,
+  credentials: true, // allow cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
+  exposedHeaders: ['set-cookie'],
 };
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // allow requests with no origin (like Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS: ' + origin));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
-}));
-app.options('*', cors()); // Enable preflight for all routes
+// Apply CORS to all routes
+app.use(cors(corsOptions));
 
-// Fallback middleware to always set CORS headers for allowed origins.
-// This helps when requests hit reverse-proxied domains like api.kaamsetu.co.in
+// Handle OPTIONS preflight requests globally
+app.options('*', cors(corsOptions));
+
+// Extra fallback for reverse-proxy issues (Render sometimes strips headers)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
@@ -69,10 +54,10 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   }
-  // For preflight
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
+
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
