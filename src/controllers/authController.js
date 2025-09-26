@@ -4,6 +4,7 @@ import OTP from '../models/OTP.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
+import MailerSend from "mailersend";
 
 // POST /api/auth/register
 export const register = async (req, res) => {
@@ -575,45 +576,32 @@ export const login = async (req, res) => {
 
 // Email service function
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,        // smtp.mailersend.net
-  port: parseInt(process.env.SMTP_PORT || '587'), // usually 587 for TLS
-  secure: false,                       // false for port 587, true for 465
-  auth: {
-    user: process.env.SMTP_USER,       // MailerSend SMTP username
-    pass: process.env.SMTP_PASS        // MailerSend SMTP password
-  }
-});
 
-// Optional: verify SMTP connection on server start
-transporter.verify((error, success) => {
-  if (error) console.log('SMTP connection error:', error);
-  else console.log('SMTP ready to send emails');
+const mailer = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY
 });
 
 export const sendOTPEmail = async (email, otp, name) => {
   try {
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,      // e.g., verification@kaamsetu.co.in
-      to: email,
-      subject: 'Verify Your Email - Kaamsetu',
+    await mailer.email.send({
+      from: process.env.EMAIL_FROM,
+      to: [email],
+      subject: "Verify Your Email - Kaamsetu",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Welcome to Kaamsetu, ${name}!</h2>
-          <p>Your OTP for email verification is:</p>
+          <h2>Welcome to Kaamsetu, ${name}!</h2>
+          <p>Your OTP is:</p>
           <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #333; border-radius: 5px;">
             ${otp}
           </div>
-          <p style="color: #666; margin-top: 20px;">This OTP will expire in 10 minutes.</p>
-          <p style="color: #666;">If you didn't request this, please ignore this email.</p>
+          <p>This OTP will expire in 10 minutes.</p>
         </div>
       `
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ OTP email sent successfully to:', email);
-  } catch (error) {
-    console.error('❌ Error sending OTP email:', error);
-    throw error;
+    });
+    console.log("✅ OTP email sent successfully");
+  } catch (err) {
+    console.error("❌ Error sending OTP email:", err);
+    throw err;
   }
 };
+
