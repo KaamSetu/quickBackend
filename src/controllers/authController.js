@@ -574,16 +574,23 @@ export const login = async (req, res) => {
   }
 };
 
-// Email service function
+
+
+// Mail send
+import { MailerSend, EmailParams, Recipient, Sender } from "mailersend";
+
+// Initialize MailerSend once
 const mailer = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY
+  apiKey: process.env.MAILERSEND_API_KEY,
 });
 
 export const sendOTPEmail = async (email, otp, name) => {
   try {
+    const recipients = [new Recipient(email, name || "User")];
+
     const emailParams = new EmailParams()
-      .setFrom(process.env.EMAIL_FROM)
-      .setTo(email)
+      .setFrom(new Sender(process.env.EMAIL_FROM, "KaamSetu")) // Verified email
+      .setTo(recipients) // Must be an array
       .setSubject("Verify Your Email - Kaamsetu")
       .setHtml(`
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -598,9 +605,10 @@ export const sendOTPEmail = async (email, otp, name) => {
 
     await mailer.email.send(emailParams);
 
-    console.log("✅ OTP email sent successfully");
+    console.log("✅ OTP email sent successfully to", email);
   } catch (err) {
     console.error("❌ Error sending OTP email:", err);
     throw err;
   }
 };
+
