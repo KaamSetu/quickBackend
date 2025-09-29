@@ -3,8 +3,7 @@ import Worker from '../models/Worker.js';
 import OTP from '../models/OTP.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
-import { MailerSend, EmailParams } from "mailersend";
+import { MailerSend, EmailParams, Recipient, Sender } from "mailersend";
 
 // POST /api/auth/register
 export const register = async (req, res) => {
@@ -577,7 +576,7 @@ export const login = async (req, res) => {
 
 
 // Mail send
-import { MailerSend, EmailParams, Recipient, Sender } from "mailersend";
+
 
 // Initialize MailerSend once
 const mailer = new MailerSend({
