@@ -48,20 +48,43 @@ export const register = async (req, res) => {
     });
 
     if (existingUser) {
-      if (existingUser.isTemporary) {
-        return res.status(400).json({
+      // If a permanent user already exists with this email/phone, prevent duplicate registration
+      if (!existingUser.isTemporary) {
+        console.log('User already exists:', email);
+        const field = existingUser.email?.email === email.toLowerCase() ? 'email' : 'phone';
+        return res.status(409).json({
           success: false,
-          message: 'Please complete your registration first. Check your email for the verification link.'
+          message: `An account with this ${field} already exists. Try logging in or use a different ${field}.`,
+          field
         });
       }
-      
-      console.log('User already exists:', email);
-      const field = existingUser.email.email === email.toLowerCase() ? 'email' : 'phone';
-      return res.status(409).json({
-        success: false,
-        message: `An account with this ${field} already exists. Try logging in or use a different ${field}.`,
-        field
-      });
+
+      // existingUser is temporary: resend OTP and ask user to verify instead of blocking
+      try {
+        console.log('Temporary user exists, resending OTP for:', email);
+
+        // Generate a fresh OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Remove any existing OTPs for this email
+        await OTP.deleteMany({ data: email.toLowerCase() });
+
+        // Save new OTP
+        const otp = new OTP({ data: email.toLowerCase(), code: otpCode });
+        await otp.save();
+
+        // Send OTP email (use existing name on the temp account if present)
+        await sendOTPEmail(email, otpCode, existingUser.name || name);
+
+        return res.status(200).json({
+          success: true,
+          message: 'OTP resent. Please verify your email.',
+          requiresVerification: true
+        });
+      } catch (err) {
+        console.error('Error resending OTP for temporary user:', err);
+        return res.status(500).json({ success: false, message: 'Unable to resend verification code. Please try again later.' });
+      }
     }
 
     // Hash password
@@ -76,11 +99,7 @@ export const register = async (req, res) => {
       isTemporary: true
     };
 
-    // Remove existing temporary user if exists
-    if (existingUser && existingUser.isTemporary) {
-      await Model.deleteOne({ _id: existingUser._id });
-      console.log('Removed existing temporary user');
-    }
+    // (No-op) We already handled existing temporary users above by resending OTP.
 
     // Create new user
     const user = new Model(userData);
