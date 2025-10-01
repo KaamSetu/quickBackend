@@ -3,7 +3,7 @@ import Worker from '../models/Worker.js';
 import OTP from '../models/OTP.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { MailerSend, EmailParams, Recipient, Sender } from "mailersend";
+import { Resend } from "resend";
 
 // POST /api/auth/register
 export const register = async (req, res) => {
@@ -597,36 +597,34 @@ export const login = async (req, res) => {
 // Mail send
 
 
-// Initialize MailerSend once
-const mailer = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY,
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPEmail = async (email, otp, name) => {
   try {
-    const recipients = [new Recipient(email, name || "User")];
-
-    const emailParams = new EmailParams()
-      .setFrom(new Sender(process.env.EMAIL_FROM, "KaamSetu")) // Verified email
-      .setTo(recipients) // Must be an array
-      .setSubject("Verify Your Email - Kaamsetu")
-      .setHtml(`
+    const { data, error } = await resend.emails.send({
+      from: `${process.env.EMAIL_FROM_NAME || "KaamSetu"} <${process.env.EMAIL_FROM}>`,
+      to: [email],
+      subject: "Verify Your Email - KaamSetu",
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Welcome to Kaamsetu, ${name}!</h2>
+          <h2>Welcome to Kaamsetu, ${name || "User"}!</h2>
           <p>Your OTP is:</p>
           <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; color: #333; border-radius: 5px;">
             ${otp}
           </div>
           <p>This OTP will expire in 10 minutes.</p>
         </div>
-      `);
+      `,
+    });
 
-    await mailer.email.send(emailParams);
+    if (error) {
+      console.error("❌ Error sending OTP email:", error);
+      throw error;
+    }
 
-    console.log("✅ OTP email sent successfully to", email);
+    console.log("✅ OTP email sent successfully:", data);
   } catch (err) {
-    console.error("❌ Error sending OTP email:", err);
+    console.error("❌ Unexpected error in sendOTPEmail:", err);
     throw err;
   }
 };
-
