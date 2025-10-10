@@ -595,13 +595,24 @@ export const uploadAadhaarDocument = async (req, res) => {
       });
     }
 
-    // Get current worker to check for existing aadhaar document
+    // Get current worker to check for existing Aadhaar document
     const worker = await Worker.findById(workerId)
-    
-    // Delete old aadhaar document from Cloudinary if exists
-    if (worker.aadhaar?.imagePublicId) {
+
+    // Check if Aadhaar is already verified
+    if (worker.aadhaar?.verificationStatus === 'verified') {
+      return res.status(400).json({
+        success: false,
+        message: 'Your Aadhaar is already verified',
+        code: 'AADHAAR_ALREADY_VERIFIED',
+        verified: true,
+        verifiedAt: worker.aadhaar.verifiedAt
+      });
+    }
+
+    // Delete old Aadhaar document from Cloudinary if exists
+    if (worker.aadhaar?.documentPublicId) {
       try {
-        await deleteFromCloudinary(worker.aadhaar.imagePublicId)
+        await deleteFromCloudinary(worker.aadhaar.documentPublicId)
       } catch (error) {
         console.error('Error deleting old aadhaar document:', error)
         // Continue with upload even if deletion fails
@@ -619,10 +630,10 @@ export const uploadAadhaarDocument = async (req, res) => {
       let errorCode = 'UPLOAD_ERROR';
       
       if (uploadError.message.includes('file type')) {
-        errorMessage = 'Unsupported file type. Please upload a JPG, JPEG, or PNG image of your Aadhaar card.';
+        errorMessage = 'Unsupported file type. Please upload a PNG, JPG, or PDF file of your Aadhaar card.';
         errorCode = 'INVALID_FILE_TYPE';
       } else if (uploadError.message.includes('File too large')) {
-        errorMessage = 'The file is too large. Please upload an image smaller than 5MB.';
+        errorMessage = 'The file is too large. Please upload a file smaller than 10MB.';
         errorCode = 'FILE_TOO_LARGE';
       } else if (uploadError.message.includes('network')) {
         errorMessage = 'Network error while uploading. Please check your connection and try again.';
@@ -638,26 +649,28 @@ export const uploadAadhaarDocument = async (req, res) => {
     }
 
     // Update worker with Aadhaar information
-    await Worker.findByIdAndUpdate(workerId, {
-      aadhaar: {
-        number: cleanAadhaarNumber,
-        image: uploadResult.url,
-        imagePublicId: uploadResult.publicId,
-        verified: false,
-        submittedAt: new Date()
-      },
-      verificationStatus: 'pending' // Update verification status
-    });
+    const updateData = {
+      'aadhaar.number': cleanAadhaarNumber,
+      'aadhaar.documentUrl': uploadResult.url,
+      'aadhaar.documentPublicId': uploadResult.publicId,
+      'aadhaar.verificationStatus': 'pending',
+      'aadhaar.submittedAt': new Date(),
+      'aadhaar.lastUpdatedAt': new Date()
+    };
+
+    if (!worker.aadhaar?.firstSubmittedAt) {
+      updateData['aadhaar.firstSubmittedAt'] = new Date();
+    }
+
+    const updatedWorker = await Worker.findByIdAndUpdate(workerId, updateData, { new: true });
 
     res.json({
       success: true,
-      message: 'Aadhaar document submitted successfully. Our team will review your details and verify your account within 24-48 hours.',
+      message: 'Aadhaar document uploaded successfully. It is now under verification.',
+      code: 'AADHAAR_UPLOAD_SUCCESS',
       status: 'pending',
-      nextSteps: [
-        'Keep your original Aadhaar card handy for verification',
-        'You will receive a notification once verification is complete',
-        'Contact support if you need to update your submitted documents'
-      ]
+      submittedAt: updatedWorker.aadhaar.submittedAt,
+      documentUrl: updatedWorker.aadhaar.documentUrl
     });
   } catch (error) {
     console.error('Error in Aadhaar verification:', error);
@@ -674,12 +687,12 @@ export const uploadAadhaarDocument = async (req, res) => {
     }
     
     // Handle duplicate key errors
-    if (error.code === 11000) {
+    if (error.code === 11000 && (error.message?.includes('aadhaar.number') || JSON.stringify(error.keyPattern || {}).includes('aadhaar.number'))) {
       return res.status(409).json({
         success: false,
-        message: 'This Aadhaar number is already in use. Please contact support if this is an error.',
+        message: 'This Aadhaar number is already registered with another account',
         code: 'DUPLICATE_AADHAAR',
-        supportContactRequired: true
+        field: 'aadhaarNumber'
       });
     }
     

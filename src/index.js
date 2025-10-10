@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import jobRoutes from './routes/jobs.js';
 import workerRoutes from './routes/workers.js';
 import clientRoutes from './routes/client.js';
+import adminRoutes from './routes/admin.js';
 import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,9 @@ const allowedOrigins = [
   'https://kaamsetu.co.in',
   'https://www.kaamsetu.co.in',
   'https://app.kaamsetu.co.in',
+  'https://admin.kaamsetu.co.in',
+  // 'http://localhost:3000', //remove when pushing
+  // 'http://localhost:5173', //remove when pushing
 ];
 
 const corsOptions = {
@@ -34,7 +38,7 @@ const corsOptions = {
     callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true, // allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Accept', 'X-Requested-With',],
   exposedHeaders: ['set-cookie'],
 };
@@ -77,6 +81,7 @@ app.use('/auth', authRoutes);
 app.use('/jobs', jobRoutes);
 app.use('/workers', workerRoutes);
 app.use('/clients', clientRoutes);
+app.use('/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

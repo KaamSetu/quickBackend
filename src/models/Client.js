@@ -57,6 +57,10 @@ const clientSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  blocked: {
+    type: Boolean,
+    default: false
+  },
   isTemporary: {
     type: Boolean,
     default: true // Auto-delete if not verified

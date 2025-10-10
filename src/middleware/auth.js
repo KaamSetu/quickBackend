@@ -51,6 +51,14 @@ export const authenticateToken = async (req, res, next) => {
       });
     }
 
+    // Block access for users marked as blocked
+    if (user.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been restricted. Contact support for assistance.'
+      });
+    }
+
     req.user = {
       userId: user._id,
       role: decoded.role,

@@ -346,7 +346,8 @@ export const verifyAuth = async (req, res) => {
           name: user.name,
           email: user.email.email,
           role: decoded.role,
-          profilePicture: user.profilePicture
+          profilePicture: user.profilePicture,
+          blocked: user.blocked === true
         }
       });
     } catch (error) {
@@ -578,7 +579,8 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email.email,
         role,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
+        blocked: user.blocked === true
       },
       role
     });

@@ -34,14 +34,16 @@ const workerSchema = new mongoose.Schema({
     number: {
       type: String,
       unique: true,
-      sparse: true
+      sparse: true // Allows multiple null values
     },
-    image: String,
-    imagePublicId: String, // Cloudinary public ID for aadhaar image
-    verified: {
-      type: Boolean,
-      default: false
-    }
+    documentUrl: String,
+    documentPublicId: String, // Cloudinary public ID for aadhaar document
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: undefined
+    },
+    submittedAt: Date
   },
   profilePicture: String,
   profilePicturePublicId: String, // Cloudinary public ID for profile picture
@@ -67,6 +69,10 @@ const workerSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  blocked: {
+    type: Boolean,
+    default: false
   },
   isTemporary: {
     type: Boolean,
